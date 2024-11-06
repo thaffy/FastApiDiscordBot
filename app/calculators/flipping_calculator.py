@@ -33,8 +33,6 @@ class FlippingCalculator:
         self.cache.pop(item_id, None)
 
     def calculate(self, item: OsrsItem, price: LatestItemsResponse) -> FlippingResult:
-        if item.id in self.cache:
-            return self.cache[item.id]
 
         high_price = price["data"][str(item.id)]["high"]
         low_price = price["data"][str(item.id)]["low"]
@@ -64,7 +62,6 @@ class FlippingCalculator:
             limit=item.limit
         )
 
-        self.cache[item.id] = flipping_result
         return flipping_result
 
     # def bulk_calculate() -> Dict[int, FlippingResult]:
