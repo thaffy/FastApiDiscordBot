@@ -65,7 +65,7 @@ class Constants:
         },
         {
             "triggers": ["nice"],
-            "response": "https://ibb.co/ynNchFs"
+            "response": "https://i.ibb.co/MDgx8kN/thaffster.png"
         }
     ]
 
