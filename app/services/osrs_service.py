@@ -3,7 +3,7 @@ from typing import Dict
 import httpx
 from pydantic import BaseModel
 
-from app.utils.logger import logger
+from app.config import settings
 
 
 class LatestItemEntry(BaseModel):
@@ -31,7 +31,7 @@ class OsrsService:
         return result.json()
 
     async def get_volumes(self):
-        result = self.client.get("https://oldschool.runescape.wiki/?title=Module:GEVolumes/data.json&action=raw&ctype=application%2Fjson")
+        result = self.client.get(settings.OSRS_VOLUMES_URL)
         return result.json()
 
     async def get_latest(self) -> LatestItemsResponse:

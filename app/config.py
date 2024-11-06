@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     OPENDOTA_BASE_URL: str = 'https://data.ssb.no/api/v0/no'
     OSRS_BASE_URL: str = 'https://prices.runescape.wiki/api/v1/osrs'
 
+    ## Other URLs
+    OSRS_VOLUMES_URL: str = 'https://oldschool.runescape.wiki/?title=Module:GEVolumes/data.json&action=raw&ctype=application%2Fjson'
+
     ## Redis Settings
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
