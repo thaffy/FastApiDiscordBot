@@ -1,6 +1,5 @@
 import google.generativeai as genai
 from google.generativeai import GenerativeModel
-from setuptools.command.bdist_egg import safety_flags
 
 from app.config import settings
 
