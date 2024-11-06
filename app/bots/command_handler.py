@@ -2,11 +2,13 @@ import math
 
 from discord.ext import commands
 
+from app.calculators.flipping_calculator import FlippingCalculator
 from app.constants import constants
 from app.utils.logger import logger
 class CommandHandler(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.flipping_calculator = FlippingCalculator()
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
@@ -53,33 +55,27 @@ class CommandHandler(commands.Cog):
             osrs_service = get_osrs_service()
 
             price = await osrs_service.get_latest_by_item_id(item.id)
-            item.highalch = price["data"][str(item.id)]["high"]
-            item.lowalch = price["data"][str(item.id)]["low"]
-            diff = item.highalch - item.lowalch
-            cash_needed = item.lowalch * item.limit
 
-            profit = ((item.highalch * 0.99) - item.lowalch) * item.limit
-            proft_no_tax = (item.highalch - item.lowalch) * item.limit
-            profit_per = (item.highalch * 0.99) - item.lowalch
+            calc = self.flipping_calculator.calculate(item, price)
 
-            total_cost = item.lowalch * item.limit
-            roi = (profit / total_cost) * 100 if total_cost > 0 else 0
-            roi_per = (profit_per / item.lowalch) * 100
-
-            profit = math.floor(profit)
-            proft_no_tax = math.floor(proft_no_tax)
-            profit_per = math.floor(profit_per)
+            emoji = "🟥" if calc.roi_percentage < 0 else "🟩"
 
             string = ""
-            string += f"{item.name} - {item.examine} \n"
-            string += f"Low Price {item.lowalch:,}gp / High Price {item.highalch:,}gp \n"
-            string += f"Difference: {diff:,}gp \n"
-            string += f"Buy limit: {item.limit} ({cash_needed:,}gp to exhaust) \n"
-            string += f"Profit per item: {profit_per:,}gp per item \n"
-            string += f"Max Profit: {profit:,}gp per buy limit (No tax: {proft_no_tax:,}gp) \n"
-            string += f"ROI: {roi:.2f}% \n"
-            string += f"ROI per item: {roi_per:.2f}% \n"
-            await ctx.send(string)
+            string += f"### **{item.name}** {emoji}\n"
+            string += f"Low Price {calc.low_price:,}gp / High Price {calc.high_price:,}gp \n"
+            string += f"Difference: {calc.price_diff:,}gp \n"
+            string += f"Buy limit: {item.limit} *({calc.cash_needed:,}gp to exhaust)* \n"
+            string += f"\n"
+            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item \n"
+            string += f"Max Profit: **{calc.total_profit:,}gp** per buy limit (No tax: ||{calc.profit_no_tax:,}gp||) \n"
+            string += f"ROI: **{calc.roi_percentage:.2f}%** \n"
+            reply = await ctx.send(string)
+
+            if calc.roi_percentage > 0:
+                await reply.add_reaction("💰")
+            else:
+                await reply.add_reaction("🤡")
+
 
     @commands.command(name='calc')
     async def calculate_finished_transaction_roi(self,ctx: commands.Context,amount: int, buy: int, sell: int):
@@ -87,7 +83,10 @@ class CommandHandler(commands.Cog):
         profit = ((sell * 0.99) - buy) * amount
         roi = (profit / total_invested) * 100 if total_invested > 0 else 0
 
+        break_even_point = buy + (buy * 0.01)
+
         profit = math.floor(profit)
+        break_even_point = math.ceil(break_even_point)
 
         string = ""
         if roi < 0:
@@ -103,5 +102,6 @@ class CommandHandler(commands.Cog):
             string += f"Profit: {profit:,}gp \n"
 
         string += f"ROI: {roi:.2f}% \n"
+        string += f"Panicking? Break even sell price: {break_even_point:,}gp \n"
 
         await ctx.send(string)
