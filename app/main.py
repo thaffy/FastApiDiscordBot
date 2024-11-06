@@ -10,22 +10,25 @@ from app.routes.ssb.router import ssb_router
 from app.services.gemini_service import GeminiService
 from app.utils.logger import logger
 
-discord_bot = get_discord_bot()
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    discord_bot = await get_discord_bot()
     try:
         logger.info("Starting application & Discord bot")
 
         ## Start Discord Bot
         asyncio.create_task(discord_bot.start(settings.DISCORD_TOKEN))
+
         logger.info("Application & Discord bot started")
         yield
     except Exception as e:
         logger.error(f"Error in application lifecycle: {e}")
     finally:
         logger.info("Shutting down application & Discord bot")
-        await discord_bot.close()
+
+        if not discord_bot.is_closed():
+            await discord_bot.close()
+
         logger.info("Application & Discord bot shut down")
 
 # Initialize FastAPI app

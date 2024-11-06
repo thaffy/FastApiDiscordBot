@@ -1,13 +1,15 @@
 import os
 
 import redis
+from discord.ext import commands
 
 from app.config import settings
 from app.services.dota_service import DotaService
 from app.services.gemini_service import GeminiService
 from app.services.redis_service import RedisService
 from app.services.ssb_service import SsbService
-from app.bots.discord_bot import bot
+from app.bots.discord_bot import DiscordBot
+
 
 ###
 # This file is used to create a dependency injection container
@@ -26,8 +28,8 @@ def get_redis_service():
     #return RedisService(redis_client)
     return
 
-def get_discord_bot():
-    return bot
+async def get_discord_bot() -> commands.Bot:
+    return await DiscordBot.get_bot()
 
 def get_gemini_service():
     return GeminiService()
