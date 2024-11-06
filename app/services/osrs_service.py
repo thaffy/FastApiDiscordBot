@@ -1,10 +1,18 @@
 from typing import Dict
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.config import settings
 
+class ItemVolumeResponse(BaseModel):
+    last_update: int = Field(alias="%LAST_UPDATE%")
+    last_update_formatted: str = Field(alias="%LAST_UPDATE_F%")
+    items: Dict[str, int] = Field(default_factory=dict)  # Dictionary for dynamic items
+
+    class Config:
+        allow_population_by_field_name = True
+        extra = "allow"  # Allows additional fields that aren't explicitly defined
 
 class LatestItemEntry(BaseModel):
     high: int
@@ -30,7 +38,7 @@ class OsrsService:
         result = self.client.get(f"{self.base_url}{endpoint}")
         return result.json()
 
-    async def get_volumes(self):
+    async def get_volumes(self) -> ItemVolumeResponse:
         result = self.client.get(settings.OSRS_VOLUMES_URL)
         return result.json()
 
