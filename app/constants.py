@@ -58,6 +58,10 @@ class Constants:
         {
             "triggers": ["shapiro","trump","adolf","hitler","peterson","tate"],
             "response": "chuds please help me"
+        },
+        {
+            "triggers": ["sup"],
+            "response": "https://ibb.co/g75xZgc"
         }
     ]
 
