@@ -1,8 +1,5 @@
 from typing import Optional
 
-from app.utils.logger import logger
-
-
 class Constants:
 
     ## Player Ids

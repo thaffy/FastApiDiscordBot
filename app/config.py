@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import List
 
 import discord
-from click import Tuple
 from discord import Intents
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

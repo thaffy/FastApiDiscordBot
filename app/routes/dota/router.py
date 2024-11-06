@@ -2,10 +2,9 @@ from typing import List, Optional
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from app.dependencies import get_dota_service, get_redis_service
+from app.dependencies import get_dota_service
 from app.routes.dota.model import ProPlayerProfile
 from app.services.dota_service import DotaService
-from app.services.redis_service import RedisService
 
 dota_router = APIRouter(prefix="/dota", tags=["dota"])
 

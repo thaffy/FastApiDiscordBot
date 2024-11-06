@@ -1,6 +1,3 @@
-
-from typing import Optional
-
 from discord.ext import commands
 
 from app.bots.command_handler import CommandHandler
