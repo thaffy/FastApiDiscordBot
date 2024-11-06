@@ -13,7 +13,7 @@ class MessageHandler:
         from app.dependencies import get_gemini_service
         self.bot = bot
         self.llm_last_message_sent = None
-        self.llm_channel = "deltabotshome"
+        self.llm_channel = "deltabotshome" ## Only works in DeltaSplit's server
         self.llm_service = get_gemini_service()
 
     async def handle_message(self, message: Message) -> None:

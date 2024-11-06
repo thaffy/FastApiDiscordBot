@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import List
 
 import discord
-from discord import Intents
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.utils.logger import logger
@@ -42,7 +41,7 @@ class Settings(BaseSettings):
     ## Discord Bot
     DISCORD_TOKEN: str = "" # Set in .env
     DISCORD_COMMAND_PREFIX: str = "$"
-    DISCORD_INTENTS: Intents = discord.Intents.default()
+    DISCORD_INTENTS: discord.Intents = discord.Intents.default()
 
     ## LLMS
     GEMINI_API_KEY: str = "" # Set in .env

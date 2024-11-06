@@ -23,6 +23,7 @@ class CommandHandler(commands.Cog):
         await ctx.send("Current commands are:\n" + "\n".join(f"!{cmd}" for cmd in curr_commands))
 
     @commands.command(name='ranks')
+    @commands.cooldown(1, 30, commands.BucketType.guild)
     async def get_player_rank(self,ctx: commands.Context):
         from app.dependencies import get_dota_service
         dota_service = get_dota_service()
