@@ -62,6 +62,10 @@ class Constants:
         {
             "triggers": ["sup"],
             "response": "https://ibb.co/g75xZgc"
+        },
+        {
+            "triggers": ["nice"],
+            "response": "https://ibb.co/ynNchFs"
         }
     ]
 
