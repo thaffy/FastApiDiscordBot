@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY . /code
 
 # Set the command to run the app
-CMD ["uvicorn", "app.main:app", "--port", "8000"]
+CMD ["fastapi","run", "app.main:app", "--port", "8000"]

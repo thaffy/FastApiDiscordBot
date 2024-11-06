@@ -61,7 +61,7 @@ class Constants:
         },
         {
             "triggers": ["sup"],
-            "response": "https://ibb.co/g75xZgc"
+            "response": "https://i.ibb.co/vB7S4zM/Screenshot-2024-10-26-220718.png"
         },
         {
             "triggers": ["nice"],
