@@ -58,12 +58,6 @@ class CommandHandler(commands.Cog):
             diff = item.highalch - item.lowalch
             cash_needed = item.lowalch * item.limit
 
-            string = ""
-            string += f"{item.name} - {item.examine} \n"
-            string += f"Low Price {item.lowalch:,}gp / High Price {item.highalch:,}gp \n"
-            string += f"Difference: {diff:,}gp \n"
-            string += f"Buy limit: {item.limit} ({cash_needed:,}gp to exhaust) \n"
-
             profit = ((item.highalch * 0.99) - item.lowalch) * item.limit
             proft_no_tax = (item.highalch - item.lowalch) * item.limit
             profit_per = (item.highalch * 0.99) - item.lowalch
@@ -76,8 +70,38 @@ class CommandHandler(commands.Cog):
             proft_no_tax = math.floor(proft_no_tax)
             profit_per = math.floor(profit_per)
 
+            string = ""
+            string += f"{item.name} - {item.examine} \n"
+            string += f"Low Price {item.lowalch:,}gp / High Price {item.highalch:,}gp \n"
+            string += f"Difference: {diff:,}gp \n"
+            string += f"Buy limit: {item.limit} ({cash_needed:,}gp to exhaust) \n"
             string += f"Profit per item: {profit_per:,}gp per item \n"
             string += f"Max Profit: {profit:,}gp per buy limit (No tax: {proft_no_tax:,}gp) \n"
             string += f"ROI: {roi:.2f}% \n"
             string += f"ROI per item: {roi_per:.2f}% \n"
             await ctx.send(string)
+
+    @commands.command(name='calc')
+    async def calculate_finished_transaction_roi(self,ctx: commands.Context,amount: int, buy: int, sell: int):
+        total_invested = buy * amount
+        profit = ((sell * 0.99) - buy) * amount
+        roi = (profit / total_invested) * 100 if total_invested > 0 else 0
+
+        profit = math.floor(profit)
+
+        string = ""
+        if roi < 0:
+            string += "Dont quit your day job.. \n"
+        else:
+            string += "Stonks! \n"
+
+        string += f"Total invested: {total_invested:,}gp \n"
+
+        if profit < 0:
+            string += f"Loss: {profit:,}gp \n"
+        else:
+            string += f"Profit: {profit:,}gp \n"
+
+        string += f"ROI: {roi:.2f}% \n"
+
+        await ctx.send(string)
