@@ -12,6 +12,7 @@ redis = "*"
 httpx = "*"
 pydantic-settings = "*"
 google-generativeai = "*"
+pandas = "*"
 
 [dev-packages]
 
