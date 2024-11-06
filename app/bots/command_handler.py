@@ -55,13 +55,17 @@ class CommandHandler(commands.Cog):
             price = await osrs_service.get_latest_by_item_id(item.id)
             item.highalch = price["data"][str(item.id)]["high"]
             item.lowalch = price["data"][str(item.id)]["low"]
+            diff = item.highalch - item.lowalch
+            cash_needed = item.lowalch * item.limit
 
             string = ""
             string += f"{item.name} - {item.examine} \n"
             string += f"Low Price {item.lowalch:,}gp / High Price {item.highalch:,}gp \n"
-            string += f"Buy limit: {item.limit} \n"
+            string += f"Difference: {diff:,}gp \n"
+            string += f"Buy limit: {item.limit} ({cash_needed:,}gp to exhaust) \n"
 
             profit = ((item.highalch * 0.99) - item.lowalch) * item.limit
+            proft_no_tax = (item.highalch - item.lowalch) * item.limit
             profit_per = (item.highalch * 0.99) - item.lowalch
 
             total_cost = item.lowalch * item.limit
@@ -69,10 +73,11 @@ class CommandHandler(commands.Cog):
             roi_per = (profit_per / item.lowalch) * 100
 
             profit = math.floor(profit)
+            proft_no_tax = math.floor(proft_no_tax)
             profit_per = math.floor(profit_per)
 
             string += f"Profit per item: {profit_per:,}gp per item \n"
-            string += f"Max Profit: {profit:,}gp per buy limit \n"
+            string += f"Max Profit: {profit:,}gp per buy limit (No tax: {proft_no_tax:,}gp) \n"
             string += f"ROI: {roi:.2f}% \n"
             string += f"ROI per item: {roi_per:.2f}% \n"
             await ctx.send(string)
