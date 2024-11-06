@@ -63,13 +63,6 @@ class Constants:
             if start <= tier <= end:
                 return rank_name
 
-    def _create_response_map(self):
-        response_map = {}
-        for item in self.PREDEFINED_RESPONSES:
-            for trigger in item["triggers"]:
-                response_map[trigger.lower()] = item["response"]
-        return response_map
-
     def get_predefined_response(self, message_content: str) -> Optional[str]:
         message_content_lower = message_content.lower()
         for item in self.PREDEFINED_RESPONSES:
