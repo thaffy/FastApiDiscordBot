@@ -3,6 +3,7 @@ from discord.ext import commands
 from app.config import settings
 from app.services.dota_service import DotaService
 from app.services.gemini_service import GeminiService
+from app.services.osrs_service import OsrsService
 from app.services.ssb_service import SsbService
 from app.bots.discord_bot import DiscordBot
 
@@ -17,6 +18,9 @@ def get_ssb_service() -> SsbService:
 
 def get_dota_service() -> DotaService:
     return DotaService(base_url=settings.OPENDOTA_BASE_URL)
+
+def get_osrs_service() -> OsrsService:
+    return OsrsService(base_url=settings.OSRS_BASE_URL)
 
 async def get_discord_bot() -> commands.Bot:
     return await DiscordBot.get_bot()

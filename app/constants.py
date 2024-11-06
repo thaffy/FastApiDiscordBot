@@ -10,10 +10,10 @@ class OsrsItem(BaseModel):
     examine: Optional[str]
     id: int
     members: Optional[bool]
-    lowalch: Optional[int]
-    limit: Optional[int]
+    lowalch: Optional[int] = 0
+    limit: Optional[int] = 0
     value: Optional[int]
-    highalch: Optional[int]
+    highalch: Optional[int] = 0
     icon: Optional[str]
     name: Optional[str]
 
@@ -115,7 +115,13 @@ class Constants:
     def get_osrs_item_by_id(self, item_id: int) -> Optional[OsrsItem]:
         return self.osrs_items.get(item_id)
 
+    def get_osrs_item_by_name(self, name: str) -> Optional[OsrsItem]:
+        for item in self.osrs_items.values():
+            if item.name.lower() == name.lower():
+                return item
+        return None
+
 
 constants = Constants()
-#constants.load_osrs_item_map()
+constants.load_osrs_item_map()
 logger.info(f"Constants Setup Complete!")

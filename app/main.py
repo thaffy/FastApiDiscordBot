@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.dependencies import get_discord_bot, get_gemini_service
 from app.routes.dota.router import dota_router
+from app.routes.osrs.router import osrs_router
 from app.routes.ssb.router import ssb_router
 from app.services.gemini_service import GeminiService
 from app.utils.logger import logger
@@ -48,6 +49,7 @@ app.add_middleware(
 
 app.include_router(dota_router)
 app.include_router(ssb_router)
+app.include_router(osrs_router)
 
 @app.get("/")
 async def root():

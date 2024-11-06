@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     ## Base Urls:
     SSB_BASE_URL: str = 'https://api.opendota.com/api'
     OPENDOTA_BASE_URL: str = 'https://data.ssb.no/api/v0/no'
+    OSRS_BASE_URL: str = 'https://prices.runescape.wiki/api/v1/osrs'
 
     ## Redis Settings
     REDIS_HOST: str = "localhost"
