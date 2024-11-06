@@ -1,21 +1,21 @@
 import json
 import os
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import BaseModel
 
 from app.utils.logger import logger
 
 
 class OsrsItem(BaseModel):
-    examine: str
+    examine: Optional[str]
     id: int
-    members: bool
-    lowalch: int
-    limit: int
-    value: int
-    highalch: int
-    icon: str
-    name: str
+    members: Optional[bool]
+    lowalch: Optional[int]
+    limit: Optional[int]
+    value: Optional[int]
+    highalch: Optional[int]
+    icon: Optional[str]
+    name: Optional[str]
 
 class Constants:
 
@@ -61,7 +61,7 @@ class Constants:
         }
     ]
 
-    OSRSITEMLIST = []
+    OSRSITEMLIST: Dict[int, OsrsItem] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -91,8 +91,8 @@ class Constants:
 
             file_path = os.path.join(os.path.dirname(__file__), "json_files/osrs_item_map.json")
             with open(file_path, "r") as file:
-                item_map: List[OsrsItem] = json.load(file)
-                self.OSRSITEMLIST = item_map
+                items = [OsrsItem(**item) for item in json.load(file)]
+            self.osrs_items = {item.id: item for item in items}
         except FileNotFoundError:
             logger.error("The osrs_item_map.json file was not found.")
             return []
@@ -101,12 +101,9 @@ class Constants:
             return []
 
     def get_osrs_item_by_id(self, item_id: int) -> Optional[OsrsItem]:
-        for item in self.OSRSITEMLIST:
-            if item["id"] == item_id:
-                return item
-        return None
+        return self.osrs_items.get(item_id)
 
 
 constants = Constants()
-constants.load_osrs_item_map()
+#constants.load_osrs_item_map()
 logger.info(f"Constants Setup Complete!")

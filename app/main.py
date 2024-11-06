@@ -25,7 +25,6 @@ async def lifespan(app: FastAPI):
         logger.error(f"Error in application lifecycle: {e}")
     finally:
         logger.info("Shutting down application & Discord bot")
-
         if not discord_bot.is_closed():
             await discord_bot.close()
 
