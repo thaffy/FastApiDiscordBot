@@ -1,4 +1,21 @@
-from typing import Optional
+import json
+import os
+from typing import Optional, List
+from pydantic import BaseModel
+
+from app.utils.logger import logger
+
+
+class OsrsItem(BaseModel):
+    examine: str
+    id: int
+    members: bool
+    lowalch: int
+    limit: int
+    value: int
+    highalch: int
+    icon: str
+    name: str
 
 class Constants:
 
@@ -44,6 +61,8 @@ class Constants:
         }
     ]
 
+    OSRSITEMLIST = []
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -67,5 +86,27 @@ class Constants:
                 return item["response"]
         return None
 
+    def load_osrs_item_map(self) -> List[OsrsItem]:
+        try:
+
+            file_path = os.path.join(os.path.dirname(__file__), "json_files/osrs_item_map.json")
+            with open(file_path, "r") as file:
+                item_map: List[OsrsItem] = json.load(file)
+                self.OSRSITEMLIST = item_map
+        except FileNotFoundError:
+            logger.error("The osrs_item_map.json file was not found.")
+            return []
+        except json.JSONDecodeError:
+            logger.error("Error decoding JSON in osrs_item_map.json.")
+            return []
+
+    def get_osrs_item_by_id(self, item_id: int) -> Optional[OsrsItem]:
+        for item in self.OSRSITEMLIST:
+            if item["id"] == item_id:
+                return item
+        return None
+
 
 constants = Constants()
+constants.load_osrs_item_map()
+logger.info(f"Constants Setup Complete!")
