@@ -62,6 +62,10 @@ class Constants:
         {
             "triggers": ["sup"],
             "response": "https://i.ibb.co/vB7S4zM/Screenshot-2024-10-26-220718.png"
+        },
+        {
+            "triggers": ["nice"],
+            "response": "https://ibb.co/ynNchFs"
         }
     ]
 
