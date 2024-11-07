@@ -42,7 +42,7 @@ class CustomFormatter(logging.Formatter):
 
 class ErrorFilter(logging.Filter):
     def filter(self, record):
-        return record.levelname in {"ERROR", "DEBUG", "CRITICAL"}
+        return record.levelname in {"ERROR","WARN", "DEBUG", "CRITICAL"}
 
 
 def setup_logger():
