@@ -1,5 +1,7 @@
 import math
+from typing import Optional
 
+from discord import Message
 from discord.ext import commands
 
 from app.calculators.flipping_calculator import FlippingCalculator
@@ -9,6 +11,7 @@ from app.utils.logger import logger
 class CommandHandler(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.item_last_message: Optional[Message] = None
         self.flipping_calculator = FlippingCalculator()
 
     @commands.Cog.listener()
@@ -67,7 +70,7 @@ class CommandHandler(commands.Cog):
             string += f"Difference: {calc.price_diff:,}gp \n"
             string += f"Buy limit: {item.limit} *({calc.cash_needed:,}gp to exhaust)* \n"
             string += f"\n"
-            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item \n"
+            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax}gp|| \n"
             string += f"Max Profit: **{calc.total_profit:,}gp** per buy limit (No tax: ||{calc.profit_no_tax:,}gp||) \n"
             string += f"ROI: **{calc.roi_percentage:.2f}%** \n"
             reply = await ctx.send(string)
@@ -104,5 +107,16 @@ class CommandHandler(commands.Cog):
 
         string += f"ROI: {roi:.2f}% \n"
         string += f"Panicking? Break even sell price: {break_even_point:,}gp \n"
+
+        await ctx.send(string)
+
+    @commands.command(name='lock', help='Clears the last message sent by the bot')
+    async def lock_trade(self,ctx: commands.Context, item_name: str, amount: int, buy: int):
+        break_even = buy * 0.99
+        total_invest = buy * amount
+
+        string = f"Locked in {amount:,} {item_name} at {buy:,}gp each \n"
+        string += f"Total investment: {total_invest:,}gp \n"
+        string += f"Break even sell price: {math.floor(break_even):,}gp \n"
 
         await ctx.send(string)

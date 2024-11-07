@@ -15,6 +15,7 @@ class FlippingResult(BaseModel):
     total_profit: int
     profit_no_tax: int
     profit_per_item: int
+    profit_per_item_no_tax: int
     total_cost: int
     roi_percentage: float
     roi_per_item: float
@@ -43,6 +44,7 @@ class FlippingCalculator:
         profit = ((high_price * (1 - self.TAX_RATE)) - low_price) * item.limit
         profit_no_tax = (high_price - low_price) * item.limit
         profit_per_item = (high_price * (1 - self.TAX_RATE)) - low_price
+        profit_per_item_no_tax = high_price - low_price
 
         total_cost = low_price * item.limit
         roi = (profit / total_cost) * 100 if total_cost > 0 else 0
@@ -56,6 +58,7 @@ class FlippingCalculator:
             total_profit=math.floor(profit),
             profit_no_tax=math.floor(profit_no_tax),
             profit_per_item=math.floor(profit_per_item),
+            profit_per_item_no_tax=math.floor(profit_per_item_no_tax),
             total_cost=math.ceil(total_cost),
             roi_percentage=roi,
             roi_per_item=roi_per_item,
