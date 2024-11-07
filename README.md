@@ -66,8 +66,10 @@ http://localhost:8000/docs
 http://127.0.0.1:8000/docs
 ```
 
-The discord bot starts in mainy.py's lifespan method.
+The discord bot starts in main.py's lifespan method.
 It might take a few seconds to start the bot after the api is up.
+
+The API & Swagger Docs should function normally, even if the bot is not running.
 
 
 ## Useful Links
