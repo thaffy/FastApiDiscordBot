@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from discord.errors import HTTPException, LoginFailure
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,22 +15,34 @@ from app.utils.logger import logger
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     discord_bot = await get_discord_bot()
+    bot_task = None
+
     try:
         logger.info("Starting application & Discord bot")
+        bot_task = asyncio.create_task(discord_bot.start(settings.DISCORD_TOKEN))
 
-        ## Start Discord Bot
-        asyncio.create_task(discord_bot.start(settings.DISCORD_TOKEN))
-
-        logger.info("Application & Discord bot started")
+        try:
+            await asyncio.sleep(1)
+            if bot_task.done() and bot_task.exception():
+                raise bot_task.exception()
+            logger.info("Application & Discord bot started")
+        except (HTTPException, LoginFailure) as e:
+            logger.warning("Discord bot failed to start: Bot features are unavailable")
+            logger.warning(f"Error: {e}")
+            bot_task = None
         yield
+
     except Exception as e:
-        logger.error(f"Error in application lifecycle: {e}")
+        logger.critical(f"Error in application lifecycle: {e}")
+
     finally:
-        logger.info("Shutting down application & Discord bot")
-        if not discord_bot.is_closed():
+        logger.warn("Shutting down application & Discord bot...")
+
+        # Shutdown the bot if it started successfully
+        if bot_task and not discord_bot.is_closed():
             await discord_bot.close()
 
-        logger.info("Application & Discord bot shut down")
+        logger.warn("Application & Discord bot shut down complete")
 
 # Initialize FastAPI app
 app = FastAPI(
