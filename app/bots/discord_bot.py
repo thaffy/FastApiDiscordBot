@@ -3,6 +3,8 @@ from discord.ext import commands
 from app.bots.command_handler import CommandHandler
 from app.bots.message_handler import setup_message_handler
 from app.config import settings
+from app.constants import constants
+from app.utils.exceptions import DiscordBotNotInitializedError
 from app.utils.logger import logger
 
 
@@ -37,3 +39,12 @@ class DiscordBot:
                 logger.info(f'Bot is in {len(cls._instance.guilds)} guilds')
 
         return cls._instance
+
+    @classmethod
+    async def send_system_message(cls, message: str, channel_id: int = constants.OSRS_TRADING_CHANNEL_ID):
+        if cls._instance is None:
+            raise DiscordBotNotInitializedError
+
+        channel = cls._instance.get_channel(channel_id)
+        await channel.send(f"System Message: {message}")
+        logger.info(f"Sent system message to channel {channel_id} in guild {channel.guild.name}")

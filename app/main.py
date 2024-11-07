@@ -1,11 +1,14 @@
 import asyncio
 from contextlib import asynccontextmanager
+from http import HTTPStatus
+
 from discord.errors import HTTPException, LoginFailure
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.dependencies import get_discord_bot, get_gemini_service
+from app.dependencies import get_discord_bot, get_gemini_service, get_discord_service
+from app.routes.discord.router import discord_router
 from app.routes.dota.router import dota_router
 from app.routes.osrs.router import osrs_router
 from app.routes.ssb.router import ssb_router
@@ -63,6 +66,7 @@ app.add_middleware(
 app.include_router(dota_router)
 app.include_router(ssb_router)
 app.include_router(osrs_router)
+app.include_router(discord_router)
 
 @app.get("/")
 async def root():
@@ -75,6 +79,8 @@ async def health():
 @app.get("/llm")
 async def llm(llm: GeminiService = Depends(get_gemini_service)):
     return {"response": await llm.generate("Write a short story in 2 sentences")}
+
+
 
 if __name__ == "__main__":
     import uvicorn

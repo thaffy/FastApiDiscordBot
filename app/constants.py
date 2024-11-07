@@ -37,6 +37,9 @@ class Constants:
         (89, 100, "Immortal")
     ]
 
+    # Discord Channel Ids
+    OSRS_TRADING_CHANNEL_ID: int = 1303857091643052124
+
     ## Discord Bot Predefined reponses
     PREDEFINED_RESPONSES = [
         {

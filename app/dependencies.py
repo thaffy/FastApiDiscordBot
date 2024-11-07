@@ -25,5 +25,8 @@ def get_osrs_service() -> OsrsService:
 async def get_discord_bot() -> commands.Bot:
     return await DiscordBot.get_bot()
 
+async def get_discord_service() -> DiscordBot:
+    return DiscordBot()
+
 def get_gemini_service() -> GeminiService:
     return GeminiService()
