@@ -1,5 +1,6 @@
 import math
-from typing import Optional
+import pandas as pd
+from typing import Optional, List
 
 from discord import Message
 from discord.ext import commands
@@ -7,7 +8,10 @@ from discord.ext import commands
 from app.calculators.flipping_calculator import FlippingCalculator
 from app.config import settings
 from app.constants import constants
+from app.models.runescape import LatestItemsResponse, FlippingResult
 from app.utils.logger import logger
+
+
 class CommandHandler(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -48,15 +52,19 @@ class CommandHandler(commands.Cog):
         await ctx.send(result)
 
     @commands.command(name='item', help='"<item name>" - price check, profit/loss calculator, ROI calculator')
-    async def get_osrs_item(self, ctx: commands.Context, item_id: str):
+    async def get_osrs_item(self, ctx: commands.Context, item_id: str, limit: Optional[int]):
         from app.dependencies import get_osrs_service
-        item = constants.get_osrs_item_by_name(item_id)
+        osrs_service = get_osrs_service()
+        item = osrs_service.get_osrs_item_by_name(item_id)
+
+        if limit is not None:
+            item.limit = limit
 
         if item is None:
             await ctx.send(f"Item with id {item_id} not found.")
         else:
 
-            osrs_service = get_osrs_service() 
+            osrs_service = get_osrs_service()
 
             price = await osrs_service.get_latest_by_item_id(item.id)
 
@@ -71,14 +79,15 @@ class CommandHandler(commands.Cog):
             elif calc.roi_percentage <= 20:
                 emoji = "🟦"
             else:
-                emoji = "👀"  
+                emoji = "👀"
 
+            buy_limit_info = ".Item likely has no buy limit" if item.limit == 100000 else f""
             string = ""
             string += f"### **{item.name}** {emoji}\n"
             string += f"Low Price {calc.low_price:,}gp / High Price {calc.high_price:,}gp \n"
             string += f"Difference: {calc.price_diff:,}gp \n"
-            string += f"Buy limit: {item.limit} *({calc.cash_needed:,}gp to exhaust)* \n"
-            string += f"\n"
+            string += f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})* \n"
+            string += f" \n"
             string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax}gp|| \n"
             string += f"Max Profit: **{calc.total_profit:,}gp** per buy limit (No tax: ||{calc.profit_no_tax:,}gp||) \n"
             string += f"ROI: **{calc.roi_percentage:.2f}%** \n"
@@ -119,13 +128,87 @@ class CommandHandler(commands.Cog):
 
         await ctx.send(string)
 
-    @commands.command(name='lock', help='Clears the last message sent by the bot')
-    async def lock_trade(self,ctx: commands.Context, item_name: str, amount: int, buy: int):
-        break_even = buy * 0.99
+    @commands.command(name='items')
+    async def get_items(self,ctx: commands.Context):
+        from app.dependencies import get_osrs_service
+        osrs_service = get_osrs_service()
+
+        item_mappings = osrs_service.OSRS_ITEM_MAPPINGS
+        prices = await osrs_service.get_latest()  # This should ideally be a LatestItemsResponse
+        volumes = await osrs_service.get_volumes()
+
+        # Check if prices is a LatestItemsResponse or dict, and extract data accordingly
+        latest_data = prices.data if isinstance(prices, LatestItemsResponse) else prices.get("data", {})
+
+        # Flatten volumes and add details from OsrsItem and LatestItemsResponse
+        data = []
+        for item_name, volume in volumes.items.items():
+            # Find the matching OsrsItem based on the name
+            osrs_item = next((item for item in item_mappings.values() if item.name == item_name), None)
+
+            if osrs_item:
+                # Find matching LatestItemEntry using the item id as a string
+                latest_entry = latest_data.get(str(osrs_item.id), None)
+
+                # Append all details to the data list
+                data.append({
+                    "item name": item_name,
+                    "volume": volume,
+                    "examine": osrs_item.examine,
+                    "id": osrs_item.id,
+                    "members": osrs_item.members,
+                    "lowalch": osrs_item.lowalch,
+                    "limit": osrs_item.limit,
+                    "value": osrs_item.value,
+                    "highalch": osrs_item.highalch,
+                    "icon": osrs_item.icon,
+                    "latest_high": latest_entry["high"] if latest_entry else None,
+                    "latest_highTime": latest_entry["highTime"] if latest_entry else None,
+                    "latest_low": latest_entry["low"] if latest_entry else None,
+                    "latest_lowTime": latest_entry["lowTime"] if latest_entry else None,
+                })
+
+        # Create the DataFrame
+        df = pd.DataFrame(data)
+        filtered_df = df[(df["volume"] >= 50)]
+
+        string = " Top 10 items sorted by ROI \n"
+
+        items= []
+
+        for index, row in filtered_df.iterrows():
+            calc = FlippingCalculator().calculate_v2(row["limit"], row["latest_high"], row["latest_low"],row["item name"])
+            items.append({
+                "item_name": calc.item_name,
+                "high_price": calc.high_price,
+                "low_price": calc.low_price,
+                "total_profit": calc.total_profit,
+                "roi_percentage": calc.roi_percentage
+            })
+
+        calc_df = pd.DataFrame(items)
+        sorted_items = calc_df.sort_values(by="roi_percentage", ascending=False)
+
+        for i in range(10):
+            string += f"{sorted_items[i].item_name} - Buy: {sorted_items[i].low_price:,}gp / Sell: {sorted_items[i].high_price:,}gp - Potential Profit: {sorted_items[i].total_profit:,}gp - ROI: {sorted_items[i].roi_percentage:.2f}% \n"
+
+        await ctx.send(string)
+
+    @commands.command(name='in', help='Register a buy transaction')
+    async def incoming_trade(self,ctx: commands.Context, item_name: str, amount: int, buy: int):
+        break_even = buy * 1.01
         total_invest = buy * amount
 
         string = f"Locked in {amount:,} {item_name} at {buy:,}gp each \n"
         string += f"Total investment: {total_invest:,}gp \n"
-        string += f"Break even sell price: {math.floor(break_even):,}gp \n"
+        string += f"Break even sell price: {math.ceil(break_even):,}gp \n"
+
+        await ctx.send(string)
+
+    @commands.command(name='out', help='Register a sell transaction')
+    async def outgoing_trade(self,ctx: commands.Context, item_name: str, amount: int, sell: int):
+        total_sale = sell * amount
+        string = f"Sold {amount:,} {item_name} at {sell:,}gp each \n"
+        string += f"Total sale: {total_sale:,}gp \n"
 
         await ctx.send(string)
