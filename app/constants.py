@@ -68,7 +68,7 @@ class Constants:
             "response": "https://i.ibb.co/MDgx8kN/thaffster.png"
         },
         {
-            "triggers": ["build"],
+            "triggers": ["build","built"],
             "response": "YOU BUILDA SHIET!!!!!!"
         }
     ]
