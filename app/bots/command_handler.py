@@ -18,6 +18,20 @@ class CommandHandler(commands.Cog):
         self.item_last_message: Optional[Message] = None
         self.flipping_calculator = FlippingCalculator()
 
+    @classmethod
+    def get_emoji(cls, roi: float) -> str:
+        emoji = "👀"
+        if roi <= 0:  # idk if this is correct, seems like a lot of elif statements
+            emoji = "🟥"
+        elif roi <= 3:
+            emoji = ":yellow_square:"
+        elif roi <= 10:
+            emoji = "🟦"
+        elif roi <= 20:
+            emoji = "🟩"
+
+        return emoji
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
         logger.error(f"Error in command {ctx}: {args} {kwargs}")
@@ -70,20 +84,9 @@ class CommandHandler(commands.Cog):
 
             calc = self.flipping_calculator.calculate(item, price)
 
-            if calc.roi_percentage <= 0: # idk if this is correct, seems like a lot of elif statements
-                emoji = "🟥"
-            elif calc.roi_percentage <= 3:
-                emoji = ":yellow_square:"
-            elif calc.roi_percentage <= 10:
-                emoji = "🟩"
-            elif calc.roi_percentage <= 20:
-                emoji = "🟦"
-            else:
-                emoji = "👀"
-
             buy_limit_info = ".Item likely has no buy limit" if item.limit == 100000 else f""
             string = ""
-            string += f"### **{item.name}** {emoji}\n"
+            string += f"### **{item.name}** {self.get_emoji(calc.roi_percentage)}\n"
             string += f"Low Price {calc.low_price:,}gp / High Price {calc.high_price:,}gp \n"
             string += f"Difference: {calc.price_diff:,}gp \n"
             string += f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})* \n"
@@ -112,9 +115,9 @@ class CommandHandler(commands.Cog):
 
         string = ""
         if roi < 0:
-            string += "###Dont quit your day job... \n"
+            string += "### Dont quit your day job... \n"
         else:
-            string += "###Stonks! \n"
+            string += "### Stonks! \n"
 
         string += f"Total invested: {total_invested:,}gp \n"
 
@@ -123,7 +126,7 @@ class CommandHandler(commands.Cog):
         else:
             string += f"Profit: **{profit:,}gp** \n"
 
-        string += f"ROI: **{roi:.2f}%** {emoji} \n"
+        string += f"ROI: **{roi:.2f}%** {self.get_emoji(roi)} \n"
         string += f"Panicking? Break even sell price: {break_even_point:,}gp \n"
 
         await ctx.send(string)
@@ -212,3 +215,6 @@ class CommandHandler(commands.Cog):
         string += f"Total sale: {total_sale:,}gp \n"
 
         await ctx.send(string)
+
+
+
