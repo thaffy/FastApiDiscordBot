@@ -56,13 +56,22 @@ class CommandHandler(commands.Cog):
             await ctx.send(f"Item with id {item_id} not found.")
         else:
 
-            osrs_service = get_osrs_service()
+            osrs_service = get_osrs_service() 
 
             price = await osrs_service.get_latest_by_item_id(item.id)
 
             calc = self.flipping_calculator.calculate(item, price)
 
-            emoji = "🟥" if calc.roi_percentage < 0 else "🟩"
+            if calc.roi_percentage <= 0: # idk if this is correct, seems like a lot of elif statements
+                emoji = "🟥"
+            elif calc.roi_percentage <= 3:
+                emoji = ":yellow_square:"
+            elif calc.roi_percentage <= 10:
+                emoji = "🟩"
+            elif calc.roi_percentage <= 20:
+                emoji = "🟦"
+            else:
+                emoji = "👀"  
 
             string = ""
             string += f"### **{item.name}** {emoji}\n"
@@ -94,18 +103,18 @@ class CommandHandler(commands.Cog):
 
         string = ""
         if roi < 0:
-            string += "Dont quit your day job.. \n"
+            string += "###Dont quit your day job... \n"
         else:
-            string += "Stonks! \n"
+            string += "###Stonks! \n"
 
         string += f"Total invested: {total_invested:,}gp \n"
 
         if profit < 0:
-            string += f"Loss: {profit:,}gp \n"
+            string += f"Loss: **{profit:,}gp** \n"
         else:
-            string += f"Profit: {profit:,}gp \n"
+            string += f"Profit: **{profit:,}gp** \n"
 
-        string += f"ROI: {roi:.2f}% \n"
+        string += f"ROI: **{roi:.2f}%** {emoji} \n"
         string += f"Panicking? Break even sell price: {break_even_point:,}gp \n"
 
         await ctx.send(string)
