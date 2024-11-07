@@ -18,6 +18,15 @@ class FlippingResult(BaseModel):
     roi_per_item: float
     limit: int
 
+class DiscordFlippingResult(BaseModel):
+    item_name: Optional[str]
+    high_price: int
+    low_price: int
+    total_profit: int
+    roi_percentage: float
+    cash_needed: int
+
+
 class OsrsItem(BaseModel):
     examine: Optional[str]
     id: int

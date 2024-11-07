@@ -1,3 +1,4 @@
+import asyncio
 import math
 import pandas as pd
 from typing import Optional, List
@@ -8,7 +9,7 @@ from discord.ext import commands
 from app.calculators.flipping_calculator import FlippingCalculator
 from app.config import settings
 from app.constants import constants
-from app.models.runescape import LatestItemsResponse, FlippingResult
+from app.models.runescape import LatestItemsResponse, FlippingResult, DiscordFlippingResult
 from app.utils.logger import logger
 
 
@@ -137,7 +138,7 @@ class CommandHandler(commands.Cog):
         await ctx.send(string)
 
     @commands.command(name='items')
-    async def get_items(self,ctx: commands.Context):
+    async def get_items(self,ctx: commands.Context, max_roi = 70):
         from app.dependencies import get_osrs_service
         osrs_service = get_osrs_service()
 
@@ -182,25 +183,46 @@ class CommandHandler(commands.Cog):
 
         string = " Top 10 items sorted by ROI \n"
 
-        items= []
+        items: List[DiscordFlippingResult] = []
 
         for index, row in filtered_df.iterrows():
             calc = FlippingCalculator().calculate_v2(row["limit"], row["latest_high"], row["latest_low"],row["item name"])
-            items.append({
-                "item_name": calc.item_name,
-                "high_price": calc.high_price,
-                "low_price": calc.low_price,
-                "total_profit": calc.total_profit,
-                "roi_percentage": calc.roi_percentage
-            })
+            items.append(DiscordFlippingResult(
+                item_name=calc.item_name,
+                high_price=calc.high_price,
+                low_price=calc.low_price,
+                total_profit=calc.total_profit,
+                roi_percentage=calc.roi_percentage,
+                cash_needed=calc.cash_needed
+            ))
 
-        calc_df = pd.DataFrame(items)
-        sorted_items = calc_df.sort_values(by="roi_percentage", ascending=False)
+        calc_data = [item.model_dump() for item in items]
+        calc_df = pd.DataFrame(calc_data).sort_values(by="roi_percentage", ascending=False)
 
-        for i in range(10):
-            string += f"{sorted_items[i].item_name} - Buy: {sorted_items[i].low_price:,}gp / Sell: {sorted_items[i].high_price:,}gp - Potential Profit: {sorted_items[i].total_profit:,}gp - ROI: {sorted_items[i].roi_percentage:.2f}% \n"
+        filtered_df = calc_df[(calc_df["roi_percentage"] < max_roi) & (calc_df["total_profit"] > 20000)]
 
-        await ctx.send(string)
+        strings = []
+        # Header with column names and a separator
+        strings.append("Item Name       |  Buy Price  |  Sell Price | Profit      | Cash Needed  | ROI")
+        strings.append("--------------------------------------------------------------------------------")
+
+        for i in range(len(filtered_df.head(20))):
+            row = filtered_df.iloc[i]
+            # Format each row with consistent padding for each column
+            strings.append(
+                f"{row.item_name[:15]:<15} | {row.low_price:>9,}gp | {row.high_price:>9,}gp | "
+                f"{row.total_profit:>9,}gp | {row.cash_needed:>10,}gp | {math.floor(row.roi_percentage):>5.2f}%"
+            )
+
+        # Join the lines into a single string with monospaced formatting
+        result_string = "```\n" + "\n".join(strings) + "\n```"
+
+        # Check length and send the message
+        if len(result_string) < 2000:
+            await ctx.send(result_string)
+        else:
+            await ctx.send("The output is too long to send in a single message.")
+
 
     @commands.command(name='in', help='Register a buy transaction')
     async def incoming_trade(self,ctx: commands.Context, item_name: str, amount: int, buy: int):
