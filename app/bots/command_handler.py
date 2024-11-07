@@ -35,6 +35,7 @@ class CommandHandler(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
         logger.error(f"Error in command {ctx}: {args} {kwargs}")
+        await ctx.message.add_reaction("🤡")
 
     @commands.command(name='ping', help='Responds with pong')
     @commands.cooldown(1, 30, commands.BucketType.user)
@@ -75,7 +76,7 @@ class CommandHandler(commands.Cog):
             item.limit = limit
 
         if item is None:
-            await ctx.send(f"Item with id {item_id} not found.")
+            await ctx.send(f"Item with name {item_id} not found.")
         else:
 
             osrs_service = get_osrs_service()
@@ -91,7 +92,7 @@ class CommandHandler(commands.Cog):
             string += f"Difference: {calc.price_diff:,}gp \n"
             string += f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})* \n"
             string += f" \n"
-            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax}gp|| \n"
+            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax}gp||) \n"
             string += f"Max Profit: **{calc.total_profit:,}gp** per buy limit (No tax: ||{calc.profit_no_tax:,}gp||) \n"
             string += f"ROI: **{calc.roi_percentage:.2f}%** \n"
             reply = await ctx.send(string)
@@ -104,6 +105,10 @@ class CommandHandler(commands.Cog):
 
     @commands.command(name='calc', help='<amount> <buy price> <sell price> - pure calculator')
     async def calculate_finished_transaction_roi(self,ctx: commands.Context,amount: int, buy: int, sell: int):
+        if amount < 1:
+            await ctx.send("Learn to buy items you idiot 🤡")
+            return
+
         total_invested = buy * amount
         profit = ((sell * 0.99) - buy) * amount
         roi = (profit / total_invested) * 100 if total_invested > 0 else 0
