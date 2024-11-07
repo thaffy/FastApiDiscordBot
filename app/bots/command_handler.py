@@ -3,6 +3,7 @@ import math
 from discord.ext import commands
 
 from app.calculators.flipping_calculator import FlippingCalculator
+from app.config import settings
 from app.constants import constants
 from app.utils.logger import logger
 class CommandHandler(commands.Cog):
@@ -24,7 +25,7 @@ class CommandHandler(commands.Cog):
     async def get_commands(self, ctx: commands.Context):
         """List all available commands"""
         curr_commands = [f"{command.name}: {command.help}" for command in self.bot.commands]
-        await ctx.send("Current commands are:\n" + "\n".join(f"!{cmd}" for cmd in curr_commands))
+        await ctx.send("Current commands are:\n" + "\n".join(f"{settings.DISCORD_COMMAND_PREFIX}{cmd}" for cmd in curr_commands))
 
     @commands.command(name='ranks')
     @commands.cooldown(1, 30, commands.BucketType.guild)
@@ -43,7 +44,7 @@ class CommandHandler(commands.Cog):
 
         await ctx.send(result)
 
-    @commands.command(name='item')
+    @commands.command(name='item', help='"<item name>" - price check, profit/loss calculator, ROI calculator')
     async def get_osrs_item(self, ctx: commands.Context, item_id: str):
         from app.dependencies import get_osrs_service
         item = constants.get_osrs_item_by_name(item_id)
@@ -77,7 +78,7 @@ class CommandHandler(commands.Cog):
                 await reply.add_reaction("🤡")
 
 
-    @commands.command(name='calc')
+    @commands.command(name='calc', help='<amount> <buy price> <sell price> - pure calculator')
     async def calculate_finished_transaction_roi(self,ctx: commands.Context,amount: int, buy: int, sell: int):
         total_invested = buy * amount
         profit = ((sell * 0.99) - buy) * amount

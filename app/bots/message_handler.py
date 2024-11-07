@@ -112,3 +112,12 @@ def setup_message_handler(bot):
     @bot.event
     async def on_message(message: Message):
         await handler.handle_message(message)
+
+    @bot.event
+    async def on_message_edit(before: Message, after: Message):
+        await after.add_reaction("👀")
+
+    @bot.event
+    async def on_message_delete(message: Message):
+        logger.info(f"Message by {message.author} deleted: {message.content}")
+
