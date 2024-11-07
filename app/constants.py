@@ -1,21 +1,12 @@
 import json
 import os
-from typing import Optional, List, Dict
-from pydantic import BaseModel
+from typing import Optional, Dict
 
+from app.models.runescape import OsrsItem
 from app.utils.logger import logger
 
 
-class OsrsItem(BaseModel):
-    examine: Optional[str]
-    id: int
-    members: Optional[bool]
-    lowalch: Optional[int] = 0
-    limit: Optional[int] = 0
-    value: Optional[int]
-    highalch: Optional[int] = 0
-    icon: Optional[str]
-    name: Optional[str]
+
 
 class Constants:
 
@@ -76,7 +67,7 @@ class Constants:
         }
     ]
 
-    OSRSITEMLIST: Dict[int, OsrsItem] = {}
+    OSRSITEMLIST: Dict[int,OsrsItem] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -101,13 +92,13 @@ class Constants:
                 return item["response"]
         return None
 
-    def load_osrs_item_map(self) -> List[OsrsItem]:
+    def load_osrs_item_map(self):
         try:
 
             file_path = os.path.join(os.path.dirname(__file__), "json_files/osrs_item_map.json")
             with open(file_path, "r") as file:
                 items = [OsrsItem(**item) for item in json.load(file)]
-            self.osrs_items = {item.id: item for item in items}
+            self.OSRSITEMLIST = {item.id: item for item in items}
         except FileNotFoundError:
             logger.error("The osrs_item_map.json file was not found.")
             return []
@@ -115,14 +106,6 @@ class Constants:
             logger.error("Error decoding JSON in osrs_item_map.json.")
             return []
 
-    def get_osrs_item_by_id(self, item_id: int) -> Optional[OsrsItem]:
-        return self.osrs_items.get(item_id)
-
-    def get_osrs_item_by_name(self, name: str) -> Optional[OsrsItem]:
-        for item in self.osrs_items.values():
-            if item.name.lower() == name.lower():
-                return item
-        return None
 
 
 constants = Constants()

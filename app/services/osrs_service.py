@@ -1,60 +1,15 @@
-from typing import Dict, Tuple, List
+from typing import Optional
 
 import httpx
-from pydantic import BaseModel, Field
-
 from app.config import settings
+from app.constants import constants
+from app.models.runescape import ItemVolumeResponse, LatestItemsResponse, OsrsItem
 from app.utils.logger import logger
 
-
-class ItemVolumeResponse(BaseModel):
-    last_update: int = Field(alias="%LAST_UPDATE%")
-    last_update_formatted: str = Field(alias="%LAST_UPDATE_F%")
-    items: Dict[str, int] = Field(default_factory=dict)  # Dictionary for dynamic items
-
-    class Config:
-        allow_population_by_field_name = True
-        extra = "allow"  # Allows additional fields that aren't explicitly defined
-
-    def calculate_volume_scale(self) -> Dict[str, int]:
-        volumes = list(self.items.values())
-        logger.info(f"Volumes: {len(volumes)}")
-
-        # Get max and min volumes
-        max_volume = max(volumes)
-        min_volume = min(volumes)
-
-        # Avoid division by zero if max and min volumes are equal
-        if max_volume == min_volume:
-            return {item: 100 for item in self.items}
-
-        # Scale each volume to a 1-100 range
-        return {
-            item: int(((volume - min_volume) / (max_volume - min_volume)) * 100)
-            for item, volume in self.items.items()
-        }
-
-    def get_scaled_sorted_volumes(self) -> List[Tuple[str, int]]:
-        # Calculate scaled volumes
-        scaled_volumes = self.calculate_volume_scale()
-
-        # Sort items by scaled volume in descending order
-        sorted_scaled_volumes = sorted(scaled_volumes.items(), key=lambda x: x[1], reverse=True)
-
-        return sorted_scaled_volumes
-
-class LatestItemEntry(BaseModel):
-    high: int
-    highTime: int
-    low: int
-    lowTime: int
-
-class LatestItemsResponse(BaseModel):
-    data: Dict[str, LatestItemEntry]
-
-
-
 class OsrsService:
+
+    OSRS_ITEM_MAPPINGS = constants.OSRSITEMLIST
+
     def __init__(self,base_url: str):
         self.client = httpx.Client()
         self.client.headers.update({"User-Agent": "Discord Bot: @Thaffy on Discord"})
@@ -62,6 +17,12 @@ class OsrsService:
 
         if self.base_url is None:
             raise Exception("base_url is required to use OsrsService")
+
+        if constants.OSRSITEMLIST.items() is None:
+            try:
+                self.OSRS_ITEM_MAPPINGS = constants.load_osrs_item_map()
+            except Exception as e:
+                logger.error(f"Error loading osrs item map: {e}")
 
     async def _get(self, endpoint: str):
         result = self.client.get(f"{self.base_url}{endpoint}")
@@ -130,9 +91,17 @@ class OsrsService:
     async def get_latest(self) -> LatestItemsResponse:
          return await self._get("/latest")
 
-
     async def get_latest_by_item_id(self, item_id: int) -> LatestItemsResponse :
         return await self._get(f"/latest?id={item_id}")
+
+    def get_osrs_item_by_id(self, item_id: int) -> Optional[OsrsItem]:
+        return self.OSRS_ITEM_MAPPINGS.get(item_id)
+
+    def get_osrs_item_by_name(self, name: str) -> Optional[OsrsItem]:
+        for item in self.OSRS_ITEM_MAPPINGS.values():
+            if item.name.lower() == name.lower():
+                return item
+        return None
 
     async def close(self):
         self.client.close()
