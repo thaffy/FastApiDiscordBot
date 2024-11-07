@@ -121,3 +121,7 @@ def setup_message_handler(bot):
     async def on_message_delete(message: Message):
         logger.info(f"Message by {message.author} deleted: {message.content}")
 
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        logger.info(f"{user} reacted with {reaction.emoji}")
+
