@@ -199,7 +199,7 @@ class CommandHandler(commands.Cog):
         calc_data = [item.model_dump() for item in items]
         calc_df = pd.DataFrame(calc_data).sort_values(by="roi_percentage", ascending=False)
 
-        filtered_df = calc_df[(calc_df["roi_percentage"] < max_roi) & (calc_df["total_profit"] > 20000)]
+        filtered_df = calc_df[(calc_df["roi_percentage"] < max_roi) & (calc_df["total_profit"] > 200000)]
 
         strings = []
         # Header with column names and a separator
