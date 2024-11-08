@@ -28,7 +28,7 @@ class CommandHandler(commands.Cog):
             emoji = ":yellow_square:"
         elif roi <= 10:
             emoji = "🟦"
-        elif roi <= 20:
+        elif roi <= 30:
             emoji = "🟩"
 
         return emoji

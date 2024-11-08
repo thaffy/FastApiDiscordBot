@@ -25,10 +25,11 @@ class FlippingCalculator:
         diff = high_price - low_price
 
         cash_needed = low_price * item.limit
+        tax_rate = self.TAX_RATE if high_price > 100 else 0
 
-        profit = ((high_price * (1 - self.TAX_RATE)) - low_price) * item.limit
+        profit = ((high_price * (1 - tax_rate)) - low_price) * item.limit
         profit_no_tax = (high_price - low_price) * item.limit
-        profit_per_item = (high_price * (1 - self.TAX_RATE)) - low_price
+        profit_per_item = (high_price * (1 -tax_rate)) - low_price
         profit_per_item_no_tax = high_price - low_price
 
         total_cost = low_price * item.limit
