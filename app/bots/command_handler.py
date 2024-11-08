@@ -93,7 +93,7 @@ class CommandHandler(commands.Cog):
             string += f"Difference: {calc.price_diff:,}gp \n"
             string += f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})* \n"
             string += f" \n"
-            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax}gp||) \n"
+            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax:,}gp||) \n"
             string += f"Max Profit: **{calc.total_profit:,}gp** per buy limit (No tax: ||{calc.profit_no_tax:,}gp||) \n"
             string += f"ROI: **{calc.roi_percentage:.2f}%** \n"
             reply = await ctx.send(string)
