@@ -9,7 +9,7 @@ from discord.ext import commands
 from app.calculators.flipping_calculator import FlippingCalculator
 from app.config import settings
 from app.constants import constants
-from app.models.runescape import LatestItemsResponse, FlippingResult, DiscordFlippingResult
+from app.models.runescape import LatestItemsResponse, FlippingResult, DiscordFlippingResult, OsrsItem
 from app.utils.logger import logger
 
 
@@ -19,8 +19,8 @@ class CommandHandler(commands.Cog):
         self.item_last_message: Optional[Message] = None
         self.flipping_calculator = FlippingCalculator()
 
-    @classmethod
-    def get_emoji(cls, roi: float) -> str:
+    @staticmethod
+    def get_emoji_by_roi(roi: float) -> str:
         emoji = "👀"
         if roi <= 0:  # idk if this is correct, seems like a lot of elif statements
             emoji = "🟥"
@@ -32,6 +32,27 @@ class CommandHandler(commands.Cog):
             emoji = "🟩"
 
         return emoji
+
+    def format_item_details(self, calc: FlippingResult, item: OsrsItem) -> str:
+        """Format item details for Discord message."""
+        buy_limit_info = (
+            "Item likely has no buy limit"
+            if item.limit == 100000
+            else ""
+        )
+
+        return (
+            f"### **{item.name}** {self.get_emoji_by_roi(roi=calc.roi_percentage)}\n"
+            f"Low Price {calc.low_price:,}gp / High Price {calc.high_price:,}gp\n"
+            f"Difference: {calc.price_diff:,}gp\n"
+            f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})*\n"
+            f"\n"
+            f"Profit per item: **{calc.profit_per_item:,}gp** per item "
+            f"(No tax: ||{calc.profit_per_item_no_tax:,}gp||)\n"
+            f"Max Profit: **{calc.total_profit:,}gp** per buy limit "
+            f"(No tax: ||{calc.profit_no_tax:,}gp||)\n"
+            f"ROI: **{calc.roi_percentage:.2f}%**\n"
+        )
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
@@ -86,16 +107,7 @@ class CommandHandler(commands.Cog):
 
             calc = self.flipping_calculator.calculate(item, price)
 
-            buy_limit_info = ".Item likely has no buy limit" if item.limit == 100000 else f""
-            string = ""
-            string += f"### **{item.name}** {self.get_emoji(calc.roi_percentage)}\n"
-            string += f"Low Price {calc.low_price:,}gp / High Price {calc.high_price:,}gp \n"
-            string += f"Difference: {calc.price_diff:,}gp \n"
-            string += f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})* \n"
-            string += f" \n"
-            string += f"Profit per item: **{calc.profit_per_item:,}gp** per item (No tax: || {calc.profit_per_item_no_tax:,}gp||) \n"
-            string += f"Max Profit: **{calc.total_profit:,}gp** per buy limit (No tax: ||{calc.profit_no_tax:,}gp||) \n"
-            string += f"ROI: **{calc.roi_percentage:.2f}%** \n"
+            string = self.format_item_details(calc, item)
             reply = await ctx.send(string)
 
             if calc.roi_percentage > 0:
@@ -132,7 +144,7 @@ class CommandHandler(commands.Cog):
         else:
             string += f"Profit: **{profit:,}gp** \n"
 
-        string += f"ROI: **{roi:.2f}%** {self.get_emoji(roi)} \n"
+        string += f"ROI: **{roi:.2f}%** {self.get_emoji_by_roi(roi)} \n"
         string += f"Panicking? Break even sell price: {break_even_point:,}gp \n"
 
         await ctx.send(string)
