@@ -1,6 +1,6 @@
-from typing import Optional, Dict, List, Tuple
-
-from pydantic import Field, BaseModel
+from typing import Optional,Dict, List, Tuple
+import numpy as np
+from pydantic import Field, BaseModel, RootModel
 
 
 class FlippingResult(BaseModel):
@@ -17,6 +17,7 @@ class FlippingResult(BaseModel):
     roi_percentage: float
     roi_per_item: float
     limit: int
+    score: int
 
 class DiscordFlippingResult(BaseModel):
     item_name: Optional[str]
@@ -39,40 +40,58 @@ class OsrsItem(BaseModel):
     name: Optional[str]
 
 
+
+
+
 class ItemVolumeResponse(BaseModel):
-    last_update: int = Field(alias="%LAST_UPDATE%")
-    last_update_formatted: str = Field(alias="%LAST_UPDATE_F%")
-    items: Dict[str, int] = Field(default_factory=dict)  # Dictionary for dynamic items
+    timestamp: int = Field(alias="%LAST_UPDATE%")
+    timestamp_formatted: str = Field(alias="%LAST_UPDATE_F%")
+    volumes: Dict[str, int] = {}
 
     class Config:
-        allow_population_by_field_name = True
-        extra = "allow"  # Allows additional fields that aren't explicitly defined
+        populate_by_name = True
 
-    def calculate_volume_scale(self) -> Dict[str, int]:
-        volumes = list(self.items.values())
+    def __init__(self, **data):
+        # Extract timestamp fields
+        timestamp = data.pop("%LAST_UPDATE%", 0)
+        timestamp_formatted = data.pop("%LAST_UPDATE_F%", "")
+        # Remaining data becomes volumes
+        super().__init__(
+            timestamp=timestamp,
+            timestamp_formatted=timestamp_formatted,
+            volumes=data
+        )
 
-        # Get max and min volumes
-        max_volume = max(volumes)
-        min_volume = min(volumes)
+    def get_volume(self, item_name: str) -> int:
+        """Get volume for a specific item."""
+        return self.volumes.get(item_name, 0)
 
-        # Avoid division by zero if max and min volumes are equal
-        if max_volume == min_volume:
-            return {item: 100 for item in self.items}
+    def get_scaled_volumes(self) -> Dict[str, int]:
+        """Scale volumes to 1-100 range."""
+        volumes = list(self.volumes.values())
+        if not volumes:
+            return {}
 
-        # Scale each volume to a 1-100 range
+        max_vol = max(volumes)
+        min_vol = min(volumes)
+
+        if max_vol == min_vol:
+            return {item: 100 for item in self.volumes}
+
         return {
-            item: int(((volume - min_volume) / (max_volume - min_volume)) * 100)
-            for item, volume in self.items.items()
+            item: int(((vol - min_vol) / (max_vol - min_vol)) * 100)
+            for item, vol in self.volumes.items()
         }
 
-    def get_scaled_sorted_volumes(self) -> List[Tuple[str, int]]:
-        # Calculate scaled volumes
-        scaled_volumes = self.calculate_volume_scale()
+    def get_sorted_volumes(self, scaled: bool = False) -> List[Tuple[str, int]]:
+        """Get volumes sorted by value, optionally scaled."""
+        data = self.get_scaled_volumes() if scaled else self.volumes
+        return sorted(data.items(), key=lambda x: x[1], reverse=True)
 
-        # Sort items by scaled volume in descending order
-        sorted_scaled_volumes = sorted(scaled_volumes.items(), key=lambda x: x[1], reverse=True)
-
-        return sorted_scaled_volumes
+    def get_percentiles(self) -> np.ndarray:
+        """Calculate volume percentiles."""
+        volumes = list(self.volumes.values())
+        return np.percentile(volumes, [25, 50, 75, 90, 95])
 
 class LatestItemEntry(BaseModel):
     high: int

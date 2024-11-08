@@ -36,7 +36,7 @@ class OsrsService:
         response = self.client.get(settings.OSRS_VOLUMES_URL)
         data = response.json()
 
-        return data
+        return ItemVolumeResponse(**data)
 
     async def get_volumes_scaled(self) -> ItemVolumeResponse:
         """

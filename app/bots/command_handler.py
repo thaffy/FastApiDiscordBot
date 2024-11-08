@@ -33,7 +33,7 @@ class CommandHandler(commands.Cog):
 
         return emoji
 
-    def format_item_details(self, calc: FlippingResult, item: OsrsItem) -> str:
+    def format_item_details(self, calc: FlippingResult, item: OsrsItem, volume: int) -> str:
         """Format item details for Discord message."""
         buy_limit_info = (
             "Item likely has no buy limit"
@@ -42,10 +42,11 @@ class CommandHandler(commands.Cog):
         )
 
         return (
-            f"### **{item.name}** {self.get_emoji_by_roi(roi=calc.roi_percentage)}\n"
+            f"### **{item.name}** \t {self.get_emoji_by_roi(roi=calc.roi_percentage)}\n"
             f"Low Price {calc.low_price:,}gp / High Price {calc.high_price:,}gp\n"
             f"Difference: {calc.price_diff:,}gp\n"
             f"Buy limit: {item.limit:,} *({calc.cash_needed:,}gp to exhaust {buy_limit_info})*\n"
+            f"Volume: {volume:,}\n"
             f"\n"
             f"Profit per item: **{calc.profit_per_item:,}gp** per item "
             f"(No tax: ||{calc.profit_per_item_no_tax:,}gp||)\n"
@@ -54,10 +55,10 @@ class CommandHandler(commands.Cog):
             f"ROI: **{calc.roi_percentage:.2f}%**\n"
         )
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
-        logger.error(f"Error in command {ctx}: {args} {kwargs}")
-        await ctx.message.add_reaction("🤡")
+    # @commands.Cog.listener()
+    # async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
+    #     logger.error(f"Error in command {ctx}: {args} {kwargs}")
+    #     await ctx.message.add_reaction("🤡")
 
     @commands.command(name='ping', help='Responds with pong')
     @commands.cooldown(1, 30, commands.BucketType.user)
@@ -100,17 +101,23 @@ class CommandHandler(commands.Cog):
         if item is None:
             await ctx.send(f"Item with name {item_id} not found.")
         else:
-
-            osrs_service = get_osrs_service()
-
+            calculator = FlippingCalculator()
+            volumes = await osrs_service.get_volumes()
+            scaled_volumes = volumes.get_scaled_volumes()
             price = await osrs_service.get_latest_by_item_id(item.id)
 
-            calc = self.flipping_calculator.calculate(item, price)
+            volume = volumes.get_volume(item.name)
+            scaled_volume = scaled_volumes.get(item.name)
 
-            string = self.format_item_details(calc, item)
+
+            result = calculator.calculate(item,price)
+            url = "<https://oldschool.runescape.wiki/w/Exchange:" + item.name.replace(" ", "_") + ">"
+            item.name = f"[{item.name}]({url})"
+            string = self.format_item_details(result, item, volume)
+
             reply = await ctx.send(string)
 
-            if calc.roi_percentage > 0:
+            if result.roi_percentage > 0:
                 await reply.add_reaction("💰")
             else:
                 await reply.add_reaction("🤡")
@@ -151,19 +158,25 @@ class CommandHandler(commands.Cog):
 
     @commands.command(name='items')
     async def get_items(self,ctx: commands.Context, max_roi = 70):
+
+        await ctx.send("This command is currently disabled")
+        return
+
+
         from app.dependencies import get_osrs_service
         osrs_service = get_osrs_service()
 
         item_mappings = osrs_service.OSRS_ITEM_MAPPINGS
         prices = await osrs_service.get_latest()  # This should ideally be a LatestItemsResponse
-        volumes = await osrs_service.get_volumes_scaled()
+        volumes = await osrs_service.get_volumes()
+        scaled_volumes = volumes.get_scaled_volumes()
 
         # Check if prices is a LatestItemsResponse or dict, and extract data accordingly
         latest_data = prices.data if isinstance(prices, LatestItemsResponse) else prices.get("data", {})
 
         # Flatten volumes and add details from OsrsItem and LatestItemsResponse
         data = []
-        for item_name, volume in volumes.items.items():
+        for item_name, volume in scaled_volumes.items():
             # Find the matching OsrsItem based on the name
             osrs_item = next((item for item in item_mappings.values() if item.name == item_name), None)
 
@@ -191,14 +204,14 @@ class CommandHandler(commands.Cog):
 
         # Create the DataFrame
         df = pd.DataFrame(data)
-        filtered_df = df[(df["volume"] >= 50)]
+        filtered_df = df[(df["volume"] >= 0)]
 
         string = " Top 10 items sorted by ROI \n"
 
         items: List[DiscordFlippingResult] = []
-
+        calculator = FlippingCalculator()
         for index, row in filtered_df.iterrows():
-            calc = FlippingCalculator().calculate_v2(row["limit"], row["latest_high"], row["latest_low"],row["item name"])
+            calc = calculator.calculate_v2(row["limit"], row["latest_high"], row["latest_low"],row["item name"])
             items.append(DiscordFlippingResult(
                 item_name=calc.item_name,
                 high_price=calc.high_price,
