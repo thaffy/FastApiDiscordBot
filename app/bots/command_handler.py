@@ -101,7 +101,6 @@ class CommandHandler(commands.Cog):
         if item is None:
             await ctx.send(f"Item with name {item_id} not found.")
         else:
-            calculator = FlippingCalculator()
             volumes = await osrs_service.get_volumes()
             scaled_volumes = volumes.get_scaled_volumes()
             price = await osrs_service.get_latest_by_item_id(item.id)
@@ -110,7 +109,7 @@ class CommandHandler(commands.Cog):
             scaled_volume = scaled_volumes.get(item.name)
 
 
-            result = calculator.calculate(item,price)
+            result = self.flipping_calculator.calculate(item,price)
             url = "<https://oldschool.runescape.wiki/w/Exchange:" + item.name.replace(" ", "_") + ">"
             item.name = f"[{item.name}]({url})"
             string = self.format_item_details(result, item, volume)
@@ -209,9 +208,8 @@ class CommandHandler(commands.Cog):
         string = " Top 10 items sorted by ROI \n"
 
         items: List[DiscordFlippingResult] = []
-        calculator = FlippingCalculator()
         for index, row in filtered_df.iterrows():
-            calc = calculator.calculate_v2(row["limit"], row["latest_high"], row["latest_low"],row["item name"])
+            calc = self.flipping_calculator.calculate_v2(row["limit"], row["latest_high"], row["latest_low"],row["item name"])
             items.append(DiscordFlippingResult(
                 item_name=calc.item_name,
                 high_price=calc.high_price,
