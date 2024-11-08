@@ -36,6 +36,16 @@ class OsrsService:
         response = self.client.get(settings.OSRS_VOLUMES_URL)
         data = response.json()
 
+        return data
+
+    async def get_volumes_scaled(self) -> ItemVolumeResponse:
+        """
+        Get trading volumes for items from the OSRS volumes API endpoint.
+        Returns an ItemVolumeResponse with logarithmically scaled volumes.
+        """
+        response = self.client.get(settings.OSRS_VOLUMES_URL)
+        data = response.json()
+
         # Extract the metadata fields
         last_update = data.pop("%LAST_UPDATE%")
         last_update_formatted = data.pop("%LAST_UPDATE_F%")
@@ -87,6 +97,7 @@ class OsrsService:
         }
 
         return ItemVolumeResponse(**structured_data)
+
 
     async def get_latest(self) -> LatestItemsResponse:
          return await self._get("/latest")

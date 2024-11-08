@@ -156,7 +156,7 @@ class CommandHandler(commands.Cog):
 
         item_mappings = osrs_service.OSRS_ITEM_MAPPINGS
         prices = await osrs_service.get_latest()  # This should ideally be a LatestItemsResponse
-        volumes = await osrs_service.get_volumes()
+        volumes = await osrs_service.get_volumes_scaled()
 
         # Check if prices is a LatestItemsResponse or dict, and extract data accordingly
         latest_data = prices.data if isinstance(prices, LatestItemsResponse) else prices.get("data", {})
