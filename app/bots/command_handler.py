@@ -255,5 +255,13 @@ class CommandHandler(commands.Cog):
 
         await ctx.send(string)
 
+    @commands.command(name='pos' , help='Check your current position (Items held, cash, total value)')
+    async def trader_position(self,ctx: commands.Context):
+        author = ctx.author
+        string = "hi"
+        await ctx.reply(string)
+
+        pass
+
 
 

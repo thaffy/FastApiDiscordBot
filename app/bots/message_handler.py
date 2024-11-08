@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
-from discord import Message
+from discord import Message, DMChannel
+from discord.abc import PrivateChannel
 
 from app.config import settings
 from app.constants import constants
@@ -29,6 +30,7 @@ class MessageHandler:
         if await self._handle_predefined_response(message):
             return
 
+        logger.info(message.channel) # Remove later
         await self._handle_llm_response(message)
 
     ## Utility class methods beyond this point ##
@@ -38,8 +40,12 @@ class MessageHandler:
 
     def _log_message(self, message: Message) -> None:
         """Log the incoming message."""
+        if message.guild is None or message.channel is None:
+            logger.info(f"DM from {message.author}: {message.content}")
+            return
+
         logger.info(
-            f"{message.guild.name}/#{message.channel.name.lower()}: "
+            f"{message.guild.name}/#{message.channel.name}: "
             f"{message.author}: {message.content}"
         )
 
