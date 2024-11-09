@@ -2,6 +2,16 @@ from typing import Optional,Dict, List, Tuple
 import numpy as np
 from pydantic import Field, BaseModel, RootModel
 
+class ItemSets:
+    DIVINES = [
+        "Divine super defence potion(4)",
+        "Divine super attack potion(4)",
+        "Divine super strength potion(4)",
+        "Divine super combat potion(4)",
+        "Divine ranging potion(4)",
+        "Divine magic potion(4)",
+
+    ]
 
 class FlippingResult(BaseModel):
     item_name: Optional[str]
