@@ -104,13 +104,17 @@ class CommandHandler(commands.Cog):
         dota_service = get_dota_service()
         response = await dota_service.get_match(match_id)
 
-        string = f"Match ID: {response['match_id']} \n"
+        string = f"### Match ID: {response['match_id']} \n"
+        i = 0
         for player in response["players"]:
             hero = constants.DOTAHEROESLIST.get(player["hero_id"]).localized_name
             persona = player["personaname"] if "personaname" in player else "Anonymous"
             rank_tier = constants.get_dota_rank_by_tier(player["rank_tier"]) if "rank_tier" in player else "Uncalibrated"
-
+            won = player["win"] == 1
             string += f"{persona} ({hero}) is rank {rank_tier} \n"
+            if i == 4:
+                string += "\n"
+            i += 1
 
 
         await ctx.send(string)
