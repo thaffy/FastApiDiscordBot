@@ -1,13 +1,13 @@
 import asyncio
 from contextlib import asynccontextmanager
-from http import HTTPStatus
+from datetime import datetime
 
 from discord.errors import HTTPException, LoginFailure
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.dependencies import get_discord_bot, get_gemini_service, get_discord_service
+from app.dependencies import get_discord_bot, get_gemini_service
 from app.routes.discord.router import discord_router
 from app.routes.dota.router import dota_router
 from app.routes.osrs.router import osrs_router
@@ -17,18 +17,21 @@ from app.utils.logger import logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    start_time = datetime.now()
     discord_bot = await get_discord_bot()
     bot_task = None
 
     try:
         logger.info("Starting application & Discord bot")
         bot_task = asyncio.create_task(discord_bot.start(settings.DISCORD_TOKEN))
-
         try:
             await asyncio.sleep(1)
+
             if bot_task.done() and bot_task.exception():
                 raise bot_task.exception()
             logger.info("Application & Discord bot started")
+            end_time = datetime.now()
+            logger.warn(f"Startup time: {end_time - start_time}")
         except (HTTPException, LoginFailure) as e:
             logger.warning("Discord bot failed to start: Bot features are unavailable")
             logger.warning(f"Error: {e}")
@@ -46,6 +49,9 @@ async def lifespan(app: FastAPI):
             await discord_bot.close()
 
         logger.warn("Application & Discord bot shut down complete")
+
+
+
 
 # Initialize FastAPI app
 app = FastAPI(

@@ -9,7 +9,7 @@ from discord.ext import commands
 from app.calculators.flipping_calculator import FlippingCalculator
 from app.config import settings
 from app.constants import constants
-from app.models.runescape import LatestItemsResponse, FlippingResult, DiscordFlippingResult, OsrsItem
+from app.models.runescape import LatestItemsResponse, FlippingResult, DiscordFlippingResult, OsrsItem, ItemSets
 from app.utils.logger import logger
 
 
@@ -150,6 +150,43 @@ class CommandHandler(commands.Cog):
                 await reply.add_reaction("💰")
             else:
                 await reply.add_reaction("🤡")
+
+    @commands.command(name='divines', help='"<item name>" - price check, profit/loss calculator, ROI calculator')
+    async def get_divine_pots(self, ctx: commands.Context):
+        from app.dependencies import get_osrs_service
+        osrs_service = get_osrs_service()
+        item_name: List[str] = ItemSets.DIVINES
+
+        volumes = await osrs_service.get_volumes()
+        scaled_volumes = volumes.get_scaled_volumes()
+
+        for name in item_name:
+            item = osrs_service.get_osrs_item_by_name(name)
+
+            if item is None:
+                await ctx.send(f"Item with name {name} not found.")
+            else:
+
+                price = await osrs_service.get_latest_by_item_id(item.id)
+
+                volume = volumes.get_volume(item.name)
+                scaled_volume = scaled_volumes.get(item.name)
+
+
+                result = self.flipping_calculator.calculate(item,price)
+                url = "<https://oldschool.runescape.wiki/w/Exchange:" + item.name.replace(" ", "_") + ">"
+                item.name = f"[{item.name}]({url})"
+                string = self.format_item_details(result, item, volume)
+
+                reply = await ctx.send(string)
+
+                if result.roi_percentage > 0:
+                    await reply.add_reaction("💰")
+                else:
+                    await reply.add_reaction("🤡")
+
+                await asyncio.sleep(1)
+
 
 
     @commands.command(name='calc', help='<amount> <buy price> <sell price> - pure calculator')

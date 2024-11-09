@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from discord.ext import commands
 
 from app.bots.command_handler import CommandHandler
@@ -14,6 +16,7 @@ class DiscordBot:
     @classmethod
     async def get_bot(cls) -> commands.Bot:
         if cls._instance is None:
+            start_time = datetime.now()
             intents = settings.DISCORD_INTENTS
             intents.members = True
             intents.message_content = True
@@ -37,6 +40,7 @@ class DiscordBot:
             async def on_ready():
                 logger.info(f"Logged in as {cls._instance.user}")
                 logger.info(f'Bot is in {len(cls._instance.guilds)} guilds')
+                logger.warn(f"Discord Bot Startup time: {datetime.now() - start_time}")
 
         return cls._instance
 

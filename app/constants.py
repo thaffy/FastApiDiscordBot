@@ -1,13 +1,11 @@
+import asyncio
 import json
 import os
+from datetime import datetime
 from typing import Optional, Dict
-
 from app.models.dota import Hero
 from app.models.runescape import OsrsItem
 from app.utils.logger import logger
-
-
-
 
 class Constants:
 
@@ -72,6 +70,10 @@ class Constants:
     DOTAHEROESLIST: Dict[int,Hero] = {}
 
     def __init__(self, **kwargs):
+        asyncio.gather(
+            asyncio.to_thread(self.load_osrs_item_map),
+            asyncio.to_thread(self.load_dota_heroes_map)
+        )
         super().__init__(**kwargs)
 
     def get_player_ids(self):
@@ -96,6 +98,7 @@ class Constants:
 
     def load_osrs_item_map(self):
         try:
+            #logger.warn(f"Loading osrs item map: {datetime.now()}")
             file_path = os.path.join(os.path.dirname(__file__), "json_files/osrs_item_map.json")
             with open(file_path, "r") as file:
                 items = [OsrsItem(**item) for item in json.load(file)]
@@ -106,9 +109,13 @@ class Constants:
         except json.JSONDecodeError:
             logger.error("Error decoding JSON in osrs_item_map.json.")
             return []
+        finally:
+            #logger.warn(f"Finished loading osrs item map: {datetime.now()}")
+            pass
 
     def load_dota_heroes_map(self):
         try:
+            #logger.warn(f"Loading dota heroes map: {datetime.now()}")
             file_path = os.path.join(os.path.dirname(__file__), "json_files/heroes.json")
             with open(file_path, "r") as file:
                 data = json.load(file)
@@ -120,11 +127,12 @@ class Constants:
         except json.JSONDecodeError:
             logger.error("Error decoding JSON in osrs_item_map.json.")
             return []
+        finally:
+            #logger.warn(f"Finished loading dota heroes map: {datetime.now()}")
+            pass
 
 
 
 
 constants = Constants()
-constants.load_osrs_item_map()
-constants.load_dota_heroes_map()
 logger.info(f"Constants Setup Complete!")
