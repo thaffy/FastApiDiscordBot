@@ -108,7 +108,7 @@ class CommandHandler(commands.Cog):
         i = 0
         for player in response["players"]:
             hero = constants.DOTAHEROESLIST.get(player["hero_id"]).localized_name
-            persona = player["personaname"] if "personaname" in player else "Anonymous"
+            persona = player["personaname"] if "personaname" in player else player["name"] if "name" in player else "Anonymous"
             rank_tier = constants.get_dota_rank_by_tier(player["rank_tier"]) if "rank_tier" in player else "Uncalibrated"
             won = player["win"] == 1
             string += f"{persona} ({hero}) is rank {rank_tier} \n"
