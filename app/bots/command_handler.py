@@ -55,10 +55,10 @@ class CommandHandler(commands.Cog):
             f"ROI: **{calc.roi_percentage:.2f}%**\n"
         )
 
-    # @commands.Cog.listener()
-    # async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
-    #     logger.error(f"Error in command {ctx}: {args} {kwargs}")
-    #     await ctx.message.add_reaction("🤡")
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: commands.Context, *args, **kwargs):
+        logger.error(f"Error in command {ctx}: {args} {kwargs}")
+        await ctx.message.add_reaction("🤡")
 
     @commands.command(name='ping', help='Responds with pong')
     @commands.cooldown(1, 30, commands.BucketType.user)
@@ -74,7 +74,7 @@ class CommandHandler(commands.Cog):
 
     @commands.command(name='ranks')
     @commands.cooldown(1, 30, commands.BucketType.guild)
-    async def get_player_rank(self,ctx: commands.Context):
+    async def get_players_rank(self,ctx: commands.Context):
         from app.dependencies import get_dota_service
         dota_service = get_dota_service()
         ids = constants.get_player_ids()
@@ -88,6 +88,32 @@ class CommandHandler(commands.Cog):
             result += f"{personaname} is {rank} \n"
 
         await ctx.send(result)
+
+    @commands.command(name='rank',help="<dota id> - Get rank of a player")
+    async def get_player_rank(self,ctx: commands.Context,dota_id: int):
+        from app.dependencies import get_dota_service
+        dota_service = get_dota_service()
+        response = await dota_service.get_player(dota_id)
+        personaname = response["profile"]["personaname"]
+        rank = constants.get_dota_rank_by_tier(response["rank_tier"])
+        await ctx.send(f"{personaname} is {rank}")
+
+    @commands.command(name='match',help="<match id> - Get match details")
+    async def get_match_details(self,ctx: commands.Context,match_id: int):
+        from app.dependencies import get_dota_service
+        dota_service = get_dota_service()
+        response = await dota_service.get_match(match_id)
+
+        string = f"Match ID: {response['match_id']} \n"
+        for player in response["players"]:
+            hero = constants.DOTAHEROESLIST.get(player["hero_id"]).localized_name
+            persona = player["personaname"] if "personaname" in player else "Anonymous"
+            rank_tier = constants.get_dota_rank_by_tier(player["rank_tier"]) if "rank_tier" in player else "Uncalibrated"
+
+            string += f"{persona} ({hero}) is rank {rank_tier} \n"
+
+
+        await ctx.send(string)
 
     @commands.command(name='item', help='"<item name>" - price check, profit/loss calculator, ROI calculator')
     async def get_osrs_item(self, ctx: commands.Context, item_id: str, limit: Optional[int]):

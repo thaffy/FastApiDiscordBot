@@ -16,8 +16,13 @@ class DotaService:
     async def health(self):
         return await self._get("/health")
 
+
     async def get_pro_players(self):
         return await self._get(f"/proPlayers")
 
     async def get_player(self, id: int):
         return await self._get(f"/players/{id}")
+
+    async def get_match(self, match_id: int):
+        return await self._get(f"/matches/{match_id}")
+

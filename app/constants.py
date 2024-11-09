@@ -2,6 +2,7 @@ import json
 import os
 from typing import Optional, Dict
 
+from app.models.dota import Hero
 from app.models.runescape import OsrsItem
 from app.utils.logger import logger
 
@@ -68,6 +69,7 @@ class Constants:
     ]
 
     OSRSITEMLIST: Dict[int,OsrsItem] = {}
+    DOTAHEROESLIST: Dict[int,Hero] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -94,7 +96,6 @@ class Constants:
 
     def load_osrs_item_map(self):
         try:
-
             file_path = os.path.join(os.path.dirname(__file__), "json_files/osrs_item_map.json")
             with open(file_path, "r") as file:
                 items = [OsrsItem(**item) for item in json.load(file)]
@@ -106,8 +107,24 @@ class Constants:
             logger.error("Error decoding JSON in osrs_item_map.json.")
             return []
 
+    def load_dota_heroes_map(self):
+        try:
+            file_path = os.path.join(os.path.dirname(__file__), "json_files/heroes.json")
+            with open(file_path, "r") as file:
+                data = json.load(file)
+                items = [Hero(**hero_data) for hero_data in data.values()]
+            self.DOTAHEROESLIST = {item.id: item for item in items}
+        except FileNotFoundError:
+            logger.error("The osrs_item_map.json file was not found.")
+            return []
+        except json.JSONDecodeError:
+            logger.error("Error decoding JSON in osrs_item_map.json.")
+            return []
+
+
 
 
 constants = Constants()
 constants.load_osrs_item_map()
+constants.load_dota_heroes_map()
 logger.info(f"Constants Setup Complete!")
